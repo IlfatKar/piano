@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Key from "../Key/Key";
 import "./Keyboard.css";
 
@@ -25,13 +25,14 @@ const createOscillator = (audioCtx: AudioContext, idx: number) => {
 };
 
 export default function Keyboard() {
+  const [active, setActive] = useState(new Set<number>());
   const audioCtx = new AudioContext();
   const gain = audioCtx.createGain();
   gain.gain.value = 0.2;
   gain.connect(audioCtx.destination);
   let iota = -1;
+
   const oscillators = new Map<number, OscillatorNode>();
-  const active = new Set<number>();
   for (let i = 0; i < keysCount; i++) {
     const osc = createOscillator(audioCtx, ++iota);
     oscillators.set(iota, osc);
@@ -47,9 +48,14 @@ export default function Keyboard() {
   const keyDown = (e: KeyboardEvent) => {
     const idx = getCurrentOscillatorKey(e.key);
     const t = oscillators.get(idx);
-    if (t && !active.has(idx)) {
-      active.add(idx);
-      t.start();
+    if (t) {
+      setActive((prev) => {
+        if (!prev.has(idx)) {
+          t.start();
+          return new Set(prev.add(idx));
+        }
+        return prev;
+      });
     }
   };
 
@@ -57,8 +63,14 @@ export default function Keyboard() {
     const idx = getCurrentOscillatorKey(e.key);
     const t = oscillators.get(idx);
     if (t) {
-      active.delete(idx);
-      t.stop();
+      setActive((prev) => {
+        if (prev.has(idx)) {
+          t.stop();
+          prev.delete(idx);
+          return new Set(prev);
+        }
+        return prev;
+      });
 
       oscillators.set(idx, createOscillator(audioCtx, idx));
       if (idx - 50 > 0) {
@@ -82,7 +94,13 @@ export default function Keyboard() {
   return (
     <div className="Keyboard">
       {new Array(keysCount).fill(0).map((_, i) => {
-        return <Key key={i} isBlack={!(i % 7 === 0 || i % 7 === 3)} />;
+        return (
+          <Key
+            active={active.has(i) ? 1 : active.has(i + 50) ? 2 : 0}
+            key={i}
+            isBlack={!(i % 7 === 0 || i % 7 === 3)}
+          />
+        );
       })}
     </div>
   );
