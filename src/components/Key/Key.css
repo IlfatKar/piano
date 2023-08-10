@@ -19,8 +19,13 @@
   left: -30%;
   position: absolute;
   transition: all 0.2s;
+  z-index: 2;
 }
 
 .Key .active {
   background-color: #a13380;
+}
+
+.Key .KeyBlack.active {
+  background-color: #702158;
 }

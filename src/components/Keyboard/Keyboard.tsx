@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Key from "../Key/Key";
 import "./Keyboard.css";
 
@@ -24,62 +24,97 @@ const createOscillator = (audioCtx: AudioContext, idx: number) => {
   return oscillator;
 };
 
+const activeType = (active: Set<number>, idx: number) =>
+  active.has(idx) && active.has(idx + 50)
+    ? 3
+    : active.has(idx)
+    ? 1
+    : active.has(idx + 50)
+    ? 2
+    : 0;
+
 export default function Keyboard() {
   const [active, setActive] = useState(new Set<number>());
   const audioCtx = new AudioContext();
   const gain = audioCtx.createGain();
   gain.gain.value = 0.2;
   gain.connect(audioCtx.destination);
-  let iota = -1;
 
-  const oscillators = new Map<number, OscillatorNode>();
-  for (let i = 0; i < keysCount; i++) {
-    const osc = createOscillator(audioCtx, ++iota);
-    oscillators.set(iota, osc);
-    osc.connect(gain);
-    if (!(i % 7 === 0 || i % 7 === 3)) {
-      const blackOsc = createOscillator(audioCtx, iota + 50);
-      oscillators.set(iota + 50, blackOsc);
-      blackOsc.detune.setValueAtTime(100 * iota + 50, audioCtx.currentTime);
-      oscillators.get(iota + 50)!.connect(gain);
+  const [oscillators, setOscillators] = useState(() => {
+    let iota = -1;
+    const copy = new Map<number, OscillatorNode>();
+    for (let i = 0; i < keysCount; i++) {
+      const osc = createOscillator(audioCtx, ++iota);
+      copy.set(iota, osc);
+      osc.connect(gain);
+      if (!(i % 7 === 0 || i % 7 === 3)) {
+        const blackOsc = createOscillator(audioCtx, iota + 50);
+        copy.set(iota + 50, blackOsc);
+        blackOsc.detune.setValueAtTime(100 * iota + 50, audioCtx.currentTime);
+        copy.get(iota + 50)!.connect(gain);
+      }
     }
-  }
+    return copy;
+  });
 
-  const keyDown = (e: KeyboardEvent) => {
-    const idx = getCurrentOscillatorKey(e.key);
+  const activate = (oscillators: Map<number, OscillatorNode>, idx: number) => {
     const t = oscillators.get(idx);
-    if (t) {
-      setActive((prev) => {
-        if (!prev.has(idx)) {
+
+    setActive((prev) => {
+      if (!prev.has(idx) && t) {
+        prev.add(idx);
+        try {
           t.start();
-          return new Set(prev.add(idx));
-        }
-        return prev;
-      });
-    }
+        } catch (e) {}
+        return new Set(prev);
+      }
+      return prev;
+    });
   };
 
-  const keyUp = (e: KeyboardEvent) => {
-    const idx = getCurrentOscillatorKey(e.key);
+  useEffect(() => {}, [active]);
+
+  const deactivate = (
+    oscillators: Map<number, OscillatorNode>,
+    idx: number
+  ) => {
     const t = oscillators.get(idx);
-    if (t) {
+    if (t && active.has(idx))
       setActive((prev) => {
         if (prev.has(idx)) {
           t.stop();
           prev.delete(idx);
+          setOscillators((prev) => {
+            const copy = new Map(prev);
+            copy.set(idx, createOscillator(audioCtx, idx));
+            if (idx - 50 >= 0) {
+              copy
+                .get(idx)!
+                .detune.setValueAtTime(
+                  100 * (idx - 50) + 50,
+                  audioCtx.currentTime
+                );
+            }
+            copy.get(idx)!.connect(gain);
+            return copy;
+          });
+
           return new Set(prev);
         }
         return prev;
       });
+  };
 
-      oscillators.set(idx, createOscillator(audioCtx, idx));
-      if (idx - 50 > 0) {
-        oscillators
-          .get(idx)!
-          .detune.setValueAtTime(100 * (idx - 50) + 50, audioCtx.currentTime);
-      }
-      oscillators.get(idx)!.connect(gain);
-    }
+  const keyDown = (e: KeyboardEvent) => {
+    const idx = getCurrentOscillatorKey(e.key);
+
+    activate(oscillators, idx);
+  };
+
+  const keyUp = (e: KeyboardEvent) => {
+    const idx = getCurrentOscillatorKey(e.key);
+
+    deactivate(oscillators, idx);
   };
 
   useEffect(() => {
@@ -89,14 +124,22 @@ export default function Keyboard() {
       window.removeEventListener("keydown", keyDown);
       window.removeEventListener("keyup", keyUp);
     };
-  }, []);
+  }, [oscillators]);
 
   return (
     <div className="Keyboard">
       {new Array(keysCount).fill(0).map((_, i) => {
         return (
           <Key
-            active={active.has(i) ? 1 : active.has(i + 50) ? 2 : 0}
+            onLeave={(isBlack: boolean) => {
+              const idx = isBlack ? i + 50 : i;
+              deactivate(oscillators, idx);
+            }}
+            onEnter={(isBlack: boolean) => {
+              const idx = isBlack ? i + 50 : i;
+              activate(oscillators, idx);
+            }}
+            active={activeType(active, i)}
             key={i}
             isBlack={!(i % 7 === 0 || i % 7 === 3)}
           />
