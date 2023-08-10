@@ -1,21 +1,7 @@
 {
   "compilerOptions": {
-<<<<<<< HEAD
-    "module": "ESNext",
-    "noImplicitAny": true,
-    "removeComments": true,
-    "preserveConstEnums": true,
-    "sourceMap": true,
-    "outDir": "dist"
-  },
-  "include": ["src/*"]
-=======
     "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -30,8 +16,5 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": [
-    "src"
-  ]
->>>>>>> ReactUI
+  "include": ["src"]
 }
