@@ -17,7 +17,7 @@ export default function Keyboard() {
 
   const playNote = usePlayNote({
     audioCtx,
-    baseFq: 220,
+    baseFq: 110,
     gain,
     oscillators,
   });
@@ -44,11 +44,13 @@ export default function Keyboard() {
   };
 
   const keyDown = (e: KeyboardEvent) => {
+    e.preventDefault();
     const key = getCurrentOscillatorKey(e.key);
     changeNoteStatus(key, "on", Number.isInteger(+e.key));
   };
 
   const keyUp = (e: KeyboardEvent) => {
+    e.preventDefault();
     const key = getCurrentOscillatorKey(e.key);
     changeNoteStatus(key, "off", Number.isInteger(+e.key));
   };

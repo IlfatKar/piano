@@ -1,3 +1,4 @@
+import wavetable from "../wavetables/Organ.json";
 export const keysCount = 7 * 5;
 let iota = 0;
 export const keys: ([number] | [number, number])[] = new Array(keysCount)
@@ -21,7 +22,7 @@ export const getCurrentOscillatorKey = (key: string) => {
 
 export const createOscillator = (audioCtx: AudioContext, idx: number) => {
   const oscillator = audioCtx.createOscillator();
-  oscillator.type = "sine";
+  // oscillator.type = "sawtooth";
   return oscillator;
 };
 
@@ -37,4 +38,10 @@ export const setFq = (
   frequency: number
 ) => {
   oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+  const wave = new PeriodicWave(audioContext, {
+    real: wavetable.real,
+    imag: wavetable.imag,
+  });
+
+  oscillator.setPeriodicWave(wave);
 };
