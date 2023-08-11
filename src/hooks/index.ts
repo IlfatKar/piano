@@ -1,4 +1,4 @@
-import { blackDelta, createOscillator } from "../utils";
+import { createOscillator, setFq } from "../utils";
 
 export const usePlayNote = (settings: {
   audioCtx: AudioContext;
@@ -15,13 +15,8 @@ export const usePlayNote = (settings: {
     }
     copy.set(note, createOscillator(settings.audioCtx, note));
     t = copy.get(note)!;
-    t.frequency.setValueAtTime(settings.baseFq, settings.audioCtx.currentTime);
-    if (note - blackDelta >= 0) {
-      t.detune.setValueAtTime(
-        100 * (note - blackDelta) + blackDelta,
-        settings.audioCtx.currentTime
-      );
-    }
+
+    setFq(settings.audioCtx, t, settings.baseFq * Math.pow(2, (note - 1) / 12));
     t.connect(settings.gain);
     t.start();
     return copy;

@@ -1,76 +1,40 @@
-export const whites = [
-  "q",
-  "w",
-  "e",
-  "r",
-  "t",
-  "y",
-  "u",
-  "i",
-  "o",
-  "p",
-  "[",
-  "]",
-];
-export const blacks = [
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "0",
-  "-",
-  "=",
-];
 export const keysCount = 7 * 5;
-export const blackDelta = 50;
+let iota = 0;
+export const keys: ([number] | [number, number])[] = new Array(keysCount)
+  .fill(0)
+  .map((_, i) => {
+    if (i % 7 === 3 || i % 7 === 0) return [0, ++iota];
+    const w = ++iota,
+      b = ++iota;
+    return [b, w];
+  });
+
+const whites = ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]"];
 export const getCurrentOscillatorKey = (key: string) => {
-  let idx = -1;
-  if (Number.isInteger(+key)) {
-    idx = blacks.findIndex((item) => item === key) + blackDelta;
+  const idx = whites.findIndex((item) => item === key);
+  if (idx !== -1) {
+    return keys[idx];
   } else {
-    idx = whites.findIndex((item) => item === key);
+    return keys.find((_, idx) => idx === +key);
   }
-  return idx;
 };
 
 export const createOscillator = (audioCtx: AudioContext, idx: number) => {
   const oscillator = audioCtx.createOscillator();
-  oscillator.type = "triangle";
-  oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
-  oscillator.detune.setValueAtTime(100 * idx, audioCtx.currentTime);
+  oscillator.type = "sine";
   return oscillator;
 };
 
-export const activeType = (active: Set<number>, idx: number) =>
-  active.has(idx) && active.has(idx + blackDelta)
-    ? 3
-    : active.has(idx)
-    ? 1
-    : active.has(idx + blackDelta)
-    ? 2
-    : 0;
-
-export const oscillatorInit = (audioCtx: AudioContext, gain: GainNode) => {
-  let iota = -1;
-  const copy = new Map<number, OscillatorNode>();
-  for (let i = 0; i < keysCount; i++) {
-    const osc = createOscillator(audioCtx, ++iota);
-    copy.set(iota, osc);
-    osc.connect(gain);
-    if (!(i % 7 === 0 || i % 7 === 3)) {
-      const blackOsc = createOscillator(audioCtx, iota + blackDelta);
-      copy.set(iota + blackDelta, blackOsc);
-      blackOsc.detune.setValueAtTime(
-        100 * iota + blackDelta,
-        audioCtx.currentTime
-      );
-      copy.get(iota + blackDelta)!.connect(gain);
-    }
-  }
-  return copy;
+export const activeType = (active: Set<number>, n: number[]) => {
+  if (active.has(n[1]) && active.has(n[0])) return 3;
+  if (active.has(n[1])) return 1;
+  if (active.has(n[0])) return 2;
+  return 0;
+};
+export const setFq = (
+  audioContext: AudioContext,
+  oscillator: OscillatorNode,
+  frequency: number
+) => {
+  oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
 };

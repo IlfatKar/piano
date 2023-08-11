@@ -17,15 +17,15 @@ export default memo(function Key({
       <div
         className={`KeyWhite ${active === 1 || active === 3 ? "active" : ""}`}
         onMouseEnter={(e) => e.buttons && onEnter(false)}
-        onMouseDown={() => onEnter(false)}
         onMouseLeave={(e) => e.buttons && onLeave(false)}
+        onMouseDown={() => onEnter(false)}
         onMouseUp={() => onLeave(false)}
       ></div>
       {isBlack && (
         <div
           onMouseEnter={(e) => e.buttons && onEnter(true)}
-          onMouseDown={(e) => onEnter(true)}
           onMouseLeave={(e) => e.buttons && onLeave(true)}
+          onMouseDown={() => onEnter(true)}
           onMouseUp={() => onLeave(true)}
           className={`KeyBlack ${active === 2 || active === 3 ? "active" : ""}`}
         ></div>

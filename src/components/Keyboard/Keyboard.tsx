@@ -2,17 +2,12 @@ import React, { useEffect, useState } from "react";
 import Key from "../Key/Key";
 import "./Keyboard.css";
 import { usePlayNote, useStopNote } from "../../hooks/index";
-import {
-  activeType,
-  blackDelta,
-  getCurrentOscillatorKey,
-  keysCount,
-} from "../../utils";
+import { activeType, getCurrentOscillatorKey, keys } from "../../utils";
 
 export default function Keyboard() {
   const audioCtx = new AudioContext();
   const gain = audioCtx.createGain();
-  gain.gain.value = 0.05;
+  gain.gain.value = 1;
   gain.connect(audioCtx.destination);
 
   const [active, setActive] = useState(new Set<number>());
@@ -28,11 +23,17 @@ export default function Keyboard() {
   });
   const stopNote = useStopNote(oscillators);
 
-  const changeNoteStatus = (idx: number, newStatus: "on" | "off") => {
-    if (
-      (idx !== -1 && active.has(idx) && newStatus === "off") ||
-      (!active.has(idx) && newStatus === "on")
-    ) {
+  const changeNoteStatus = (
+    key: number[] | undefined,
+    newStatus: "on" | "off",
+    isBlack: boolean
+  ) => {
+    if (!key) {
+      return;
+    }
+    const isHas = isBlack ? active.has(key[0]) : active.has(key[1]);
+    const idx = isBlack ? key[0] : key[1];
+    if ((isHas && newStatus === "off") || (!isHas && newStatus === "on")) {
       setOscillators(newStatus === "on" ? playNote(idx) : stopNote(idx));
       setActive((prev) => {
         const copy = new Set(prev);
@@ -43,13 +44,13 @@ export default function Keyboard() {
   };
 
   const keyDown = (e: KeyboardEvent) => {
-    const idx = getCurrentOscillatorKey(e.key);
-    changeNoteStatus(idx, "on");
+    const key = getCurrentOscillatorKey(e.key);
+    changeNoteStatus(key, "on", Number.isInteger(+e.key));
   };
 
   const keyUp = (e: KeyboardEvent) => {
-    const idx = getCurrentOscillatorKey(e.key);
-    changeNoteStatus(idx, "off");
+    const key = getCurrentOscillatorKey(e.key);
+    changeNoteStatus(key, "off", Number.isInteger(+e.key));
   };
 
   useEffect(() => {
@@ -63,20 +64,18 @@ export default function Keyboard() {
 
   return (
     <div className="Keyboard">
-      {new Array(keysCount).fill(0).map((_, i) => {
+      {keys.map((n, i) => {
         return (
           <Key
             onLeave={(isBlack: boolean) => {
-              const idx = isBlack ? i + blackDelta : i;
-              changeNoteStatus(idx, "off");
+              changeNoteStatus(n, "off", isBlack);
             }}
             onEnter={(isBlack: boolean) => {
-              const idx = isBlack ? i + blackDelta : i;
-              changeNoteStatus(idx, "on");
+              changeNoteStatus(n, "on", isBlack);
             }}
-            active={activeType(active, i)}
+            active={activeType(active, n)}
             key={i}
-            isBlack={!(i % 7 === 0 || i % 7 === 3)}
+            isBlack={n[0] > 1}
           />
         );
       })}
