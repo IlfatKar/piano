@@ -16,7 +16,6 @@ export default memo(function Key({
     <div className="Key">
       <div
         className={`KeyWhite ${active === 1 || active === 3 ? "active" : ""}`}
-        onMouseMove={(e) => e.buttons && onEnter(false)}
         onMouseEnter={(e) => e.buttons && onEnter(false)}
         onMouseDown={() => onEnter(false)}
         onMouseLeave={(e) => e.buttons && onLeave(false)}
@@ -24,7 +23,6 @@ export default memo(function Key({
       ></div>
       {isBlack && (
         <div
-          onMouseMove={(e) => e.buttons && onEnter(true)}
           onMouseEnter={(e) => e.buttons && onEnter(true)}
           onMouseDown={(e) => onEnter(true)}
           onMouseLeave={(e) => e.buttons && onLeave(true)}
