@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Key from "../Key/Key";
 import "./Keyboard.css";
 import { usePlayNote, useStopNote } from "../../hooks/index";
 import { activeType, getCurrentOscillatorKey, keys } from "../../utils";
+import { ActiveNotesContext } from "../../App";
 
 export default function Keyboard() {
   const audioCtx = new AudioContext();
   const gain = audioCtx.createGain();
   gain.gain.value = 0.1;
   gain.connect(audioCtx.destination);
-
-  const [active, setActive] = useState(new Set<number>());
+  const { active, setActive } = useContext(ActiveNotesContext);
   const [oscillators, setOscillators] = useState(
     new Map<number, OscillatorNode>()
   );
@@ -31,13 +31,13 @@ export default function Keyboard() {
     if (!key) {
       return;
     }
-    const isHas = isBlack ? active.has(key[0]) : active.has(key[1]);
-    const idx = isBlack ? key[0] : key[1];
+    const isHas = isBlack ? active.has(key[1]) : active.has(key[0]);
+    const idx = isBlack ? key[1] : key[0];
     if ((isHas && newStatus === "off") || (!isHas && newStatus === "on")) {
       setOscillators(newStatus === "on" ? playNote(idx) : stopNote(idx));
       setActive((prev) => {
-        const copy = new Set(prev);
-        copy[newStatus === "on" ? "add" : "delete"](idx);
+        const copy = new Map(prev);
+        copy[newStatus === "on" ? "set" : "delete"](idx, isBlack);
         return copy;
       });
     }
@@ -77,7 +77,7 @@ export default function Keyboard() {
             }}
             active={activeType(active, n)}
             key={i}
-            isBlack={n[0] > 1}
+            isBlack={n[1] > 1}
           />
         );
       })}
