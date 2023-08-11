@@ -7,7 +7,7 @@ import { activeType, getCurrentOscillatorKey, keys } from "../../utils";
 export default function Keyboard() {
   const audioCtx = new AudioContext();
   const gain = audioCtx.createGain();
-  gain.gain.value = 1;
+  gain.gain.value = 0.1;
   gain.connect(audioCtx.destination);
 
   const [active, setActive] = useState(new Set<number>());
@@ -17,7 +17,7 @@ export default function Keyboard() {
 
   const playNote = usePlayNote({
     audioCtx,
-    baseFq: 110,
+    baseFq: 27.5,
     gain,
     oscillators,
   });

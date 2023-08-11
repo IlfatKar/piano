@@ -1,5 +1,6 @@
 import wavetable from "../wavetables/Organ.json";
-export const keysCount = 7 * 5;
+export const keysCount = 7 * 6;
+const skipKeys = 7 * 2;
 let iota = 0;
 export const keys: ([number] | [number, number])[] = new Array(keysCount)
   .fill(0)
@@ -14,15 +15,14 @@ const whites = ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]"];
 export const getCurrentOscillatorKey = (key: string) => {
   const idx = whites.findIndex((item) => item === key);
   if (idx !== -1) {
-    return keys[idx];
+    return keys[idx + skipKeys];
   } else {
-    return keys.find((_, idx) => idx === +key);
+    return keys.find((_, idx) => idx === +key + skipKeys);
   }
 };
 
 export const createOscillator = (audioCtx: AudioContext, idx: number) => {
   const oscillator = audioCtx.createOscillator();
-  // oscillator.type = "sawtooth";
   return oscillator;
 };
 
