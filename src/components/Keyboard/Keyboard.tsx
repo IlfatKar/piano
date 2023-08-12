@@ -8,21 +8,21 @@ import { ActiveNotesContext } from "../../App";
 const Volume = 1;
 export default function Keyboard() {
   const audioCtx = new AudioContext();
-  const gain = audioCtx.createGain();
-  gain.gain.value = Volume;
-  gain.connect(audioCtx.destination);
+  const master = audioCtx.createGain();
+  master.gain.value = Volume;
+  master.connect(audioCtx.destination);
   const { active, setActive } = useContext(ActiveNotesContext);
   const [oscillators, setOscillators] = useState(
-    new Map<number, OscillatorNode>()
+    new Map<number, { oscillator: OscillatorNode; gain: GainNode }>()
   );
 
   const playNote = usePlayNote({
     audioCtx,
     baseFq: 27.5,
-    gain,
+    master,
     oscillators,
   });
-  const stopNote = useStopNote(oscillators);
+  const stopNote = useStopNote(audioCtx, oscillators);
 
   const changeNoteStatus = (
     key: number[] | undefined,

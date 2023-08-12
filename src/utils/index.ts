@@ -1,6 +1,6 @@
 import wavetable from "../wavetables/Organ.json";
 export const keysCount = 7 * 6;
-const skipKeys = 0; //7 * 2;
+const skipKeys = 7 * 2;
 let iota = 0;
 export const keys: [number, number][] = new Array(keysCount)
   .fill(0)
@@ -21,7 +21,15 @@ export const getCurrentOscillatorKey = (key: string) => {
   }
 };
 
-export const createOscillator = (audioCtx: AudioContext, idx: number) => {
+export const createGain = (audioCtx: AudioContext, master: GainNode) => {
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0, audioCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 0.05);
+  gain.connect(master);
+  return gain;
+};
+
+export const createOscillator = (audioCtx: AudioContext) => {
   const oscillator = audioCtx.createOscillator();
   return oscillator;
 };
