@@ -6,8 +6,8 @@ export const keys: [number, number][] = new Array(keysCount)
   .fill(0)
   .map((_, i) => {
     if (i % 7 === 3 || i % 7 === 0) return [++iota, 0];
-    let b = ++iota,
-      w = ++iota;
+    let w = ++iota,
+      b = ++iota;
     return [w, b];
   });
 

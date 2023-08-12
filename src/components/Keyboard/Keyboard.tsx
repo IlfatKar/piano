@@ -5,10 +5,11 @@ import { usePlayNote, useStopNote } from "../../hooks/index";
 import { activeType, getCurrentOscillatorKey, keys } from "../../utils";
 import { ActiveNotesContext } from "../../App";
 
+const Volume = 1;
 export default function Keyboard() {
   const audioCtx = new AudioContext();
   const gain = audioCtx.createGain();
-  gain.gain.value = 0.1;
+  gain.gain.value = Volume;
   gain.connect(audioCtx.destination);
   const { active, setActive } = useContext(ActiveNotesContext);
   const [oscillators, setOscillators] = useState(

@@ -3,6 +3,21 @@ import "./NotesCanvas.css";
 import { keysCount } from "../../utils";
 import { ActiveNotesContext } from "../../App";
 
+const colors = [
+  "#00FEFC",
+  "#00FF00",
+  "#15F4EE",
+  "#4D4DFF",
+  "#50BFE6",
+  "#66FF66",
+  "#6F00FF",
+  "#9457EB",
+  "#C3732A",
+  "#CCFF00",
+  "#DF00FF",
+  "#FF6EFF",
+];
+
 class NoteBlock {
   constructor(
     note: number,
@@ -21,26 +36,31 @@ class NoteBlock {
   position;
   color;
   isBlack;
+  continuous: boolean = true;
+  height: number = 1;
 }
-const blockHeight = 100;
 const speed = 1;
 
 function getWhiteCount(key: number) {
   const a = key / 12;
-  const w = key - Math.round(a * 5);
+  const w = key - Math.round(a * 5 - 0.05);
   return w;
 }
 
 export default function NotesCanvas() {
   const { active } = useContext(ActiveNotesContext);
+  const [prevActive, setPrevActive] = useState(new Map(active));
   const [blocks, setBlocks] = useState<NoteBlock[]>([]);
   const [blockWidth, setBlockWidth] = useState<number>(0);
   const requestAnim = useRef<number>(0);
   const canvas = useRef<HTMLCanvasElement>(null);
 
   let prev: number | null = null;
-  // FIXME
-  let draw = (timestamp: number, ctx: CanvasRenderingContext2D) => {
+  let draw = (
+    timestamp: number,
+    ctx: CanvasRenderingContext2D,
+    blockWidth: number
+  ) => {
     setBlocks((blocks) => {
       if (!prev) prev = timestamp;
       const dt = timestamp - prev;
@@ -50,22 +70,22 @@ export default function NotesCanvas() {
       const blackWidth = blockWidth * 0.6;
       blocks.forEach((item) => {
         ctx.fillStyle = item.color;
+        if (item.continuous) item.height += speed * dt;
         ctx.fillRect(
           item.position[0],
           item.position[1],
           !item.isBlack ? blockWidth : blackWidth,
-          blockHeight
+          item.height
         );
-
         item.position[1] -= speed * dt;
-        if (item.position[1] + blockHeight < 0) {
+        if (item.position[1] + item.height < 0) {
           arr = arr.filter((block) => block.id !== item.id);
         }
       });
       return arr;
     });
     requestAnim.current = requestAnimationFrame((timestamp) => {
-      draw(timestamp, ctx);
+      draw(timestamp, ctx, blockWidth);
     });
   };
 
@@ -81,31 +101,45 @@ export default function NotesCanvas() {
       canvas.current.height = rect.height * dpr;
       ctx.scale(dpr, dpr);
       setBlockWidth(ctx.canvas.width / keysCount);
-      requestAnim.current = requestAnimationFrame((time) => draw(time, ctx));
+      requestAnim.current = requestAnimationFrame((time) =>
+        draw(time, ctx, blockWidth)
+      );
     }
     return () => cancelAnimationFrame(requestAnim.current);
-  }, [canvas]);
+  }, [canvas, blockWidth]);
 
   useEffect(() => {
     const arr: NoteBlock[] = [...blocks];
     let blackWidth = blockWidth * 0.6;
-    active.forEach((isBlack, key) => {
-      const w = getWhiteCount(key - 1);
-      // FIXME
-      const x = !isBlack ? w * blockWidth : w * blockWidth - blackWidth / 2;
+    const skip = new Set<number>();
 
-      arr.push(
-        new NoteBlock(
-          key,
-          [x, window.innerHeight * 0.75],
-          `rgb(${Math.random() * 255},${Math.random() * 255},${
-            Math.random() * 255
-          })`,
-          isBlack
-        )
-      );
+    prevActive.forEach((_, key) => {
+      if (!active.has(key)) {
+        const item = arr.find((item) => item.note === key && item.continuous);
+        if (item) {
+          item.continuous = false;
+          skip.add(key);
+        }
+      }
     });
+
+    active.forEach((isBlack, key) => {
+      if (!skip.has(key) && !prevActive.has(key)) {
+        let w = getWhiteCount(key - 1);
+        const x = !isBlack ? w * blockWidth : w * blockWidth - blackWidth / 2;
+        arr.push(
+          new NoteBlock(
+            key,
+            [x, window.innerHeight * 0.75],
+            colors[key % 12],
+            isBlack
+          )
+        );
+      }
+    });
+
     setBlocks(arr);
+    setPrevActive(active);
   }, [active, blockWidth]);
 
   return (
