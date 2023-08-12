@@ -39,7 +39,7 @@ class NoteBlock {
   continuous: boolean = true;
   height: number = 1;
 }
-const speed = 1;
+const speed = 0.25;
 
 function getWhiteCount(key: number) {
   const a = key / 12;

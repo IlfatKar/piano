@@ -10,8 +10,15 @@ export const usePlayNote = (settings: {
     const copy = new Map(settings.oscillators);
     let t = copy.get(note);
     if (t) {
-      t.oscillator.stop();
-      t.oscillator.disconnect();
+      t.gain.gain.setValueAtTime(
+        t.gain.gain.value,
+        settings.audioCtx.currentTime
+      );
+      t.gain.gain.exponentialRampToValueAtTime(
+        0.0001,
+        settings.audioCtx.currentTime + 2
+      );
+      t.oscillator.stop(settings.audioCtx.currentTime + 2.1);
     }
     const gain = createGain(settings.audioCtx, settings.master);
     const oscillator = createOscillator(settings.audioCtx);
@@ -40,7 +47,15 @@ export const useStopNote = (
   return (note: number) => {
     const copy = new Map(oscillators);
     const t = copy.get(note);
-    t?.gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
+    if (t) {
+      t.gain.gain.setValueAtTime(t.gain.gain.value, audioCtx.currentTime);
+      t.gain.gain.exponentialRampToValueAtTime(
+        0.0001,
+        audioCtx.currentTime + 2
+      );
+      t.oscillator.stop(audioCtx.currentTime + 2.1);
+      copy.delete(note);
+    }
     return copy;
   };
 };
